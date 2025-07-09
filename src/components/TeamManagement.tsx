@@ -1,80 +1,132 @@
-import React, { useState } from 'react'
-
-interface TeamPlayer {
-  id: number
-  name: string
-  position: string
-  team: string
-  points: number
-  isStarter: boolean
-}
-
-interface Team {
-  id: number
-  name: string
-  sport: string
-  players: TeamPlayer[]
-  budget: number
-  usedBudget: number
-}
+import React, { useState, useEffect } from 'react'
+import { teamsAPI, type Team } from '../services/api'
+import { useAuth } from '../contexts/AuthContext'
 
 const TeamManagement: React.FC = () => {
-  const [selectedTeam, setSelectedTeam] = useState<number>(1)
+  const { user } = useAuth()
+  const [selectedTeamId, setSelectedTeamId] = useState<string>('')
+  const [teams, setTeams] = useState<Team[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [showCreateTeam, setShowCreateTeam] = useState(false)
   const [newTeamName, setNewTeamName] = useState('')
-  const [newTeamSport, setNewTeamSport] = useState('Football')
+  const [newTeamSport, setNewTeamSport] = useState('football')
 
-  const teams: Team[] = [
-    {
-      id: 1,
-      name: 'Thunder Bolts',
-      sport: 'Football',
-      budget: 100,
-      usedBudget: 78.5,
-      players: [
-        { id: 1, name: 'Josh Allen', position: 'QB', team: 'BUF', points: 298, isStarter: true },
-        { id: 2, name: 'Derrick Henry', position: 'RB', team: 'TEN', points: 267, isStarter: true },
-        { id: 3, name: 'Cooper Kupp', position: 'WR', team: 'LAR', points: 289, isStarter: true },
-        { id: 4, name: 'Travis Kelce', position: 'TE', team: 'KC', points: 234, isStarter: true },
-        { id: 5, name: 'Justin Tucker', position: 'K', team: 'BAL', points: 156, isStarter: true },
-        { id: 6, name: 'Steelers', position: 'DEF', team: 'PIT', points: 189, isStarter: true },
-        { id: 7, name: 'Tua Tagovailoa', position: 'QB', team: 'MIA', points: 201, isStarter: false },
-      ]
-    },
-    {
-      id: 2,
-      name: 'Ice Dragons',
-      sport: 'Basketball',
-      budget: 100,
-      usedBudget: 82.3,
-      players: [
-        { id: 8, name: 'LeBron James', position: 'SF', team: 'LAL', points: 456, isStarter: true },
-        { id: 9, name: 'Stephen Curry', position: 'PG', team: 'GSW', points: 423, isStarter: true },
-        { id: 10, name: 'Giannis Antetokounmpo', position: 'PF', team: 'MIL', points: 478, isStarter: true },
-        { id: 11, name: 'Luka Dončić', position: 'PG', team: 'DAL', points: 445, isStarter: false },
-      ]
+  // Fetch user's teams on component mount
+  useEffect(() => {
+    const fetchTeams = async () => {
+      try {
+        setLoading(true)
+        setError('')
+        const response = await teamsAPI.getTeams()
+        setTeams(response.teams || [])
+        if (response.teams && response.teams.length > 0) {
+          setSelectedTeamId(response.teams[0]._id)
+        }
+      } catch (err) {
+        console.error('Error fetching teams:', err)
+        setError('Failed to load teams. Please try again.')
+        setTeams([])
+      } finally {
+        setLoading(false)
+      }
     }
-  ]
 
-  const currentTeam = teams.find(team => team.id === selectedTeam)
+    if (user) {
+      fetchTeams()
+    }
+  }, [user])
 
-  const handleToggleStarter = (playerId: number) => {
-    console.log(`Toggling starter status for player ${playerId}`)
-    // In a real app, this would update the player's starter status
+  const currentTeam = teams.find(team => team._id === selectedTeamId)
+
+  const handleToggleStarter = async (playerId: string) => {
+    if (!currentTeam) return
+
+    try {
+      // Find the roster entry for this player
+      const rosterEntry = currentTeam.roster.find(r => r.playerId === playerId)
+      if (!rosterEntry) return
+
+      // Update the team roster
+      await teamsAPI.updateTeam(currentTeam._id, {
+        name: currentTeam.name, // Required field
+        description: currentTeam.description
+      })
+
+      // Note: The actual roster update might need a separate API endpoint
+      // For now, we'll refresh the data
+      const response = await teamsAPI.getTeams()
+      setTeams(response.teams || [])
+    } catch (err) {
+      console.error('Error toggling starter status:', err)
+      setError('Failed to update player status')
+    }
   }
 
-  const handleDropPlayer = (playerId: number) => {
-    console.log(`Dropping player ${playerId}`)
-    // In a real app, this would remove the player from the team
+  const handleDropPlayer = async (playerId: string) => {
+    if (!currentTeam) return
+
+    try {
+      await teamsAPI.removePlayerFromTeam(currentTeam._id, playerId)
+
+      // Refresh teams data
+      const response = await teamsAPI.getTeams()
+      setTeams(response.teams || [])
+    } catch (err) {
+      console.error('Error dropping player:', err)
+      setError('Failed to drop player')
+    }
   }
 
-  const handleCreateTeam = () => {
-    if (newTeamName.trim()) {
-      console.log(`Creating new team: ${newTeamName} (${newTeamSport})`)
+  const handleCreateTeam = async () => {
+    if (!newTeamName.trim()) return
+
+    try {
+      setError('')
+      await teamsAPI.createTeam({
+        name: newTeamName.trim(),
+        description: `${newTeamSport} team`,
+        league: 'default-league' // You might want to make this configurable
+      })
+
       setNewTeamName('')
       setShowCreateTeam(false)
-      // In a real app, this would create a new team
+
+      // Refresh teams data
+      const response = await teamsAPI.getTeams()
+      setTeams(response.teams || [])
+
+      // Select the new team if it's the first one
+      if (response.teams && response.teams.length === 1) {
+        setSelectedTeamId(response.teams[0]._id)
+      }
+    } catch (err) {
+      console.error('Error creating team:', err)
+      setError('Failed to create team')
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="team-management">
+        <div className="team-header">
+          <h2>Team Management</h2>
+          <p>Loading teams...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="team-management">
+        <div className="team-header">
+          <h2>Team Management</h2>
+          <p className="error-message">{error}</p>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -82,18 +134,19 @@ const TeamManagement: React.FC = () => {
       <div className="team-header">
         <h2>Team Management</h2>
         <div className="team-controls">
-          <select 
-            value={selectedTeam} 
-            onChange={(e) => setSelectedTeam(Number(e.target.value))}
+          <select
+            value={selectedTeamId}
+            onChange={(e) => setSelectedTeamId(e.target.value)}
             className="team-select"
           >
+            <option value="">Select a team</option>
             {teams.map(team => (
-              <option key={team.id} value={team.id}>
+              <option key={team._id} value={team._id}>
                 {team.name} ({team.sport})
               </option>
             ))}
           </select>
-          <button 
+          <button
             className="create-team-btn"
             onClick={() => setShowCreateTeam(true)}
           >
@@ -134,77 +187,55 @@ const TeamManagement: React.FC = () => {
           <div className="team-info">
             <h3>{currentTeam.name}</h3>
             <div className="budget-info">
-              <span>Budget: ${currentTeam.usedBudget}M / ${currentTeam.budget}M</span>
+              <span>Budget: ${currentTeam.budget - currentTeam.remainingBudget}M / ${currentTeam.budget}M</span>
               <div className="budget-bar">
-                <div 
-                  className="budget-used" 
-                  style={{ width: `${(currentTeam.usedBudget / currentTeam.budget) * 100}%` }}
+                <div
+                  className="budget-used"
+                  style={{ width: `${((currentTeam.budget - currentTeam.remainingBudget) / currentTeam.budget) * 100}%` }}
                 ></div>
               </div>
             </div>
-          </div>
-
-          <div className="lineup-section">
-            <h4>Starting Lineup</h4>
-            <div className="players-list">
-              {currentTeam.players.filter(p => p.isStarter).map(player => (
-                <div key={player.id} className="player-row starter">
-                  <div className="player-info">
-                    <span className="player-name">{player.name}</span>
-                    <span className="player-position">{player.position}</span>
-                    <span className="player-team">{player.team}</span>
-                  </div>
-                  <div className="player-stats">
-                    <span className="points">{player.points} pts</span>
-                  </div>
-                  <div className="player-actions">
-                    <button 
-                      onClick={() => handleToggleStarter(player.id)}
-                      className="bench-btn"
-                    >
-                      Bench
-                    </button>
-                    <button 
-                      onClick={() => handleDropPlayer(player.id)}
-                      className="drop-btn"
-                    >
-                      Drop
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="team-stats">
+              <p>Record: {currentTeam.wins}-{currentTeam.losses}-{currentTeam.ties}</p>
+              <p>Total Points: {currentTeam.totalPoints}</p>
+              <p>Roster Size: {currentTeam.rosterCount}/{currentTeam.maxRosterSize}</p>
             </div>
           </div>
 
-          <div className="bench-section">
-            <h4>Bench</h4>
+          <div className="roster-section">
+            <h4>Team Roster</h4>
             <div className="players-list">
-              {currentTeam.players.filter(p => !p.isStarter).map(player => (
-                <div key={player.id} className="player-row bench">
-                  <div className="player-info">
-                    <span className="player-name">{player.name}</span>
-                    <span className="player-position">{player.position}</span>
-                    <span className="player-team">{player.team}</span>
+              {currentTeam.roster.length === 0 ? (
+                <p>No players in roster. Add players to get started!</p>
+              ) : (
+                currentTeam.roster.map(rosterEntry => (
+                  <div key={rosterEntry.playerId} className={`player-row ${rosterEntry.isStarter ? 'starter' : 'bench'}`}>
+                    <div className="player-info">
+                      <span className="player-name">Player ID: {rosterEntry.playerId}</span>
+                      <span className="player-position">{rosterEntry.position}</span>
+                      <span className="player-status">{rosterEntry.isStarter ? 'Starter' : 'Bench'}</span>
+                    </div>
+                    <div className="player-stats">
+                      <span className="salary">${rosterEntry.salary}M</span>
+                      <span className="acquisition">{rosterEntry.acquisitionType}</span>
+                    </div>
+                    <div className="player-actions">
+                      <button
+                        onClick={() => handleToggleStarter(rosterEntry.playerId)}
+                        className={rosterEntry.isStarter ? "bench-btn" : "start-btn"}
+                      >
+                        {rosterEntry.isStarter ? 'Bench' : 'Start'}
+                      </button>
+                      <button
+                        onClick={() => handleDropPlayer(rosterEntry.playerId)}
+                        className="drop-btn"
+                      >
+                        Drop
+                      </button>
+                    </div>
                   </div>
-                  <div className="player-stats">
-                    <span className="points">{player.points} pts</span>
-                  </div>
-                  <div className="player-actions">
-                    <button 
-                      onClick={() => handleToggleStarter(player.id)}
-                      className="start-btn"
-                    >
-                      Start
-                    </button>
-                    <button 
-                      onClick={() => handleDropPlayer(player.id)}
-                      className="drop-btn"
-                    >
-                      Drop
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>
