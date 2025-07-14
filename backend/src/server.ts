@@ -13,6 +13,9 @@ import playerRoutes from './routes/players.js';
 import teamRoutes from './routes/teams.js';
 import leagueRoutes from './routes/leagues.js';
 import authRoutes from './routes/auth.js';
+import matchRoutes from './routes/matches.js';
+import tradeRoutes from './routes/trades.js';
+import analyticsRoutes from './routes/analytics.js';
 
 // Import seeding utility
 import { seedAll } from './utils/seedData.js';
@@ -70,6 +73,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/players', playerRoutes);
 app.use('/api/teams', teamRoutes);
 app.use('/api/leagues', leagueRoutes);
+app.use('/api/matches', matchRoutes);
+app.use('/api/trades', tradeRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

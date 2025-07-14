@@ -429,4 +429,188 @@ export const leaguesAPI = {
   getLeagueStandings: (id: string) => apiClient.getLeagueStandings(id),
 };
 
+// New interfaces for enhanced features
+export interface Match {
+  _id: string;
+  homeTeam: {
+    id: string;
+    name: string;
+    abbreviation: string;
+    logo?: string;
+  };
+  awayTeam: {
+    id: string;
+    name: string;
+    abbreviation: string;
+    logo?: string;
+  };
+  sport: 'football' | 'basketball' | 'baseball' | 'hockey';
+  league: string;
+  season: string;
+  week?: number;
+  gameDate: Date;
+  status: 'scheduled' | 'live' | 'completed' | 'postponed' | 'cancelled';
+  score: {
+    home: number;
+    away: number;
+  };
+  quarter?: number;
+  timeRemaining?: string;
+  playerStats: Array<{
+    playerId: string;
+    playerName: string;
+    team: 'home' | 'away';
+    position: string;
+    stats: Record<string, any>;
+    fantasyPoints: number;
+  }>;
+}
+
+export interface Trade {
+  _id: string;
+  league: string;
+  initiator: {
+    userId: string;
+    teamId: string;
+    teamName: string;
+  };
+  recipient: {
+    userId: string;
+    teamId: string;
+    teamName: string;
+  };
+  offeredPlayers: Array<{
+    playerId: string;
+    playerName: string;
+    position: string;
+    team: string;
+    fantasyValue: number;
+  }>;
+  requestedPlayers: Array<{
+    playerId: string;
+    playerName: string;
+    position: string;
+    team: string;
+    fantasyValue: number;
+  }>;
+  status: 'pending' | 'accepted' | 'rejected' | 'cancelled' | 'expired';
+  message?: string;
+  tradeDeadline: Date;
+  tradeValue: {
+    initiatorValue: number;
+    recipientValue: number;
+    fairnessScore: number;
+  };
+  createdAt: Date;
+}
+
+// Enhanced API services
+export const matchesAPI = {
+  getLiveScores: async (params?: {
+    sport?: string;
+    league?: string;
+    week?: number;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.sport) queryParams.append('sport', params.sport);
+    if (params?.league) queryParams.append('league', params.league);
+    if (params?.week) queryParams.append('week', params.week.toString());
+
+    const response = await apiClient.get(`/matches/live?${queryParams}`);
+    return response.data;
+  },
+
+  getMatchDetails: async (matchId: string) => {
+    const response = await apiClient.get(`/matches/${matchId}`);
+    return response.data;
+  },
+
+  getSchedule: async (sport: string, params?: {
+    startDate?: string;
+    endDate?: string;
+    team?: string;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.startDate) queryParams.append('startDate', params.startDate);
+    if (params?.endDate) queryParams.append('endDate', params.endDate);
+    if (params?.team) queryParams.append('team', params.team);
+
+    const response = await apiClient.get(`/matches/schedule/${sport}?${queryParams}`);
+    return response.data;
+  },
+
+  getHighlights: async (sport: string, week: number) => {
+    const response = await apiClient.get(`/matches/highlights/${sport}/${week}`);
+    return response.data;
+  }
+};
+
+export const tradesAPI = {
+  getLeagueTrades: async (leagueId: string, params?: {
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+    const response = await apiClient.get(`/trades/league/${leagueId}?${queryParams}`);
+    return response.data;
+  },
+
+  getTeamTrades: async (teamId: string) => {
+    const response = await apiClient.get(`/trades/team/${teamId}`);
+    return response.data;
+  },
+
+  proposeTrade: async (tradeData: {
+    leagueId: string;
+    recipientTeamId: string;
+    offeredPlayerIds: string[];
+    requestedPlayerIds: string[];
+    message?: string;
+  }) => {
+    const response = await apiClient.post('/trades', tradeData);
+    return response.data;
+  },
+
+  respondToTrade: async (tradeId: string, action: 'accept' | 'reject', rejectionReason?: string) => {
+    const response = await apiClient.put(`/trades/${tradeId}/respond`, {
+      action,
+      rejectionReason
+    });
+    return response.data;
+  },
+
+  cancelTrade: async (tradeId: string) => {
+    const response = await apiClient.put(`/trades/${tradeId}/cancel`);
+    return response.data;
+  }
+};
+
+export const analyticsAPI = {
+  getLeagueAnalytics: async (leagueId: string) => {
+    const response = await apiClient.get(`/analytics/league/${leagueId}`);
+    return response.data;
+  },
+
+  getTeamAnalytics: async (teamId: string) => {
+    const response = await apiClient.get(`/analytics/team/${teamId}`);
+    return response.data;
+  },
+
+  getPlayerAnalytics: async (playerId: string, weeks?: number) => {
+    const queryParams = weeks ? `?weeks=${weeks}` : '';
+    const response = await apiClient.get(`/analytics/player/${playerId}${queryParams}`);
+    return response.data;
+  },
+
+  getTrends: async (leagueId: string) => {
+    const response = await apiClient.get(`/analytics/trends/${leagueId}`);
+    return response.data;
+  }
+};
+
 export default apiClient;

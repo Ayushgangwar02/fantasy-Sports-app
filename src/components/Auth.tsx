@@ -28,16 +28,10 @@ const Auth: React.FC = () => {
     setError('');
     setIsLoading(true);
 
-    console.log('Auth: Starting', isLogin ? 'login' : 'registration', 'process...');
-    console.log('Auth: Form data:', { ...formData, password: '[HIDDEN]' });
-
     try {
       if (isLogin) {
-        console.log('Auth: Calling login...');
         await login(formData.email, formData.password);
-        console.log('Auth: Login successful!');
       } else {
-        console.log('Auth: Calling register...');
         await register({
           username: formData.username,
           email: formData.email,
@@ -45,10 +39,8 @@ const Auth: React.FC = () => {
           firstName: formData.firstName,
           lastName: formData.lastName,
         });
-        console.log('Auth: Registration successful!');
       }
     } catch (err: any) {
-      console.error('Auth: Error during', isLogin ? 'login' : 'registration', ':', err);
       setError(err.message || 'An error occurred');
     } finally {
       setIsLoading(false);
@@ -68,59 +60,59 @@ const Auth: React.FC = () => {
   };
 
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <div className="auth-header">
-          <h2 className="auth-title">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             {isLogin ? 'Sign in to your account' : 'Create your account'}
           </h2>
-          <p className="auth-subtitle">
+          <p className="mt-2 text-center text-sm text-gray-600">
             {isLogin ? "Don't have an account? " : 'Already have an account? '}
             <button
               type="button"
               onClick={toggleMode}
-              className="auth-toggle-btn"
+              className="font-medium text-indigo-600 hover:text-indigo-500"
             >
               {isLogin ? 'Sign up' : 'Sign in'}
             </button>
           </p>
         </div>
         
-        <form className="auth-form" onSubmit={handleSubmit}>
-          <div className="form-fields">
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="rounded-md shadow-sm -space-y-px">
             {!isLogin && (
               <>
-                <div className="form-group">
+                <div>
                   <input
                     id="firstName"
                     name="firstName"
                     type="text"
                     required
-                    className="form-input"
+                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                     placeholder="First Name"
                     value={formData.firstName}
                     onChange={handleInputChange}
                   />
                 </div>
-                <div className="form-group">
+                <div>
                   <input
                     id="lastName"
                     name="lastName"
                     type="text"
                     required
-                    className="form-input"
+                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                     placeholder="Last Name"
                     value={formData.lastName}
                     onChange={handleInputChange}
                   />
                 </div>
-                <div className="form-group">
+                <div>
                   <input
                     id="username"
                     name="username"
                     type="text"
                     required
-                    className="form-input"
+                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                     placeholder="Username"
                     value={formData.username}
                     onChange={handleInputChange}
@@ -129,28 +121,30 @@ const Auth: React.FC = () => {
               </>
             )}
             
-            <div className="form-group">
+            <div>
               <input
                 id="email"
                 name="email"
                 type="email"
                 autoComplete="email"
                 required
-                className="form-input"
+                className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${
+                  isLogin ? 'rounded-t-md' : ''
+                } focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm`}
                 placeholder="Email address"
                 value={formData.email}
                 onChange={handleInputChange}
               />
             </div>
-
-            <div className="form-group">
+            
+            <div>
               <input
                 id="password"
                 name="password"
                 type="password"
                 autoComplete={isLogin ? 'current-password' : 'new-password'}
                 required
-                className="form-input"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleInputChange}
@@ -159,20 +153,20 @@ const Auth: React.FC = () => {
           </div>
 
           {error && (
-            <div className="error-message">
-              {error}
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="text-sm text-red-700">{error}</div>
             </div>
           )}
 
-          <div className="form-group">
+          <div>
             <button
               type="submit"
               disabled={isLoading}
-              className="auth-submit-btn"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? (
-                <div className="loading-content">
-                  <div className="button-spinner"></div>
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                   {isLogin ? 'Signing in...' : 'Creating account...'}
                 </div>
               ) : (

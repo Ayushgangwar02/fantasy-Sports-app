@@ -6,25 +6,26 @@ import Dashboard from './components/Dashboard'
 import PlayerManagement from './components/PlayerManagement'
 import TeamManagement from './components/TeamManagement'
 import LeagueStandings from './components/LeagueStandings'
+import LiveScores from './components/LiveScores'
+import Analytics from './components/Analytics'
+import TradeCenter from './components/TradeCenter'
+import LeagueCreation from './components/LeagueCreation'
 
 const AppContent: React.FC = () => {
-  console.log('AppContent: Starting to render')
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const { isAuthenticated, isLoading, user, logout } = useAuth()
 
-  try {
-    const [activeTab, setActiveTab] = useState('dashboard')
-    const { isAuthenticated, isLoading, user, logout } = useAuth()
+  console.log('App: Render state - isLoading:', isLoading, 'isAuthenticated:', isAuthenticated, 'user:', user)
 
-    console.log('App: Render state - isLoading:', isLoading, 'isAuthenticated:', isAuthenticated, 'user:', user)
-
-    if (isLoading) {
-      console.log('App: Showing loading screen')
-      return (
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p className="loading-text">Loading Fantasy Sports Manager...</p>
-        </div>
-      )
-    }
+  if (isLoading) {
+    console.log('App: Showing loading screen')
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p className="ml-4">Loading...</p>
+      </div>
+    )
+  }
 
   if (!isAuthenticated) {
     return <Auth />
@@ -40,6 +41,14 @@ const AppContent: React.FC = () => {
         return <TeamManagement />
       case 'league':
         return <LeagueStandings />
+      case 'scores':
+        return <LiveScores />
+      case 'analytics':
+        return <Analytics leagueId="test-league-id" />
+      case 'trades':
+        return <TradeCenter leagueId="test-league-id" teamId="test-team-id" />
+      case 'create-league':
+        return <LeagueCreation onLeagueCreated={(id) => console.log('League created:', id)} />
       default:
         return <Dashboard />
     }
@@ -65,25 +74,49 @@ const AppContent: React.FC = () => {
             className={`nav-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
             onClick={() => setActiveTab('dashboard')}
           >
-            Dashboard
+            🏠 Dashboard
           </button>
           <button
             className={`nav-tab ${activeTab === 'players' ? 'active' : ''}`}
             onClick={() => setActiveTab('players')}
           >
-            Players
+            👥 Players
           </button>
           <button
             className={`nav-tab ${activeTab === 'teams' ? 'active' : ''}`}
             onClick={() => setActiveTab('teams')}
           >
-            My Teams
+            🏈 My Teams
           </button>
           <button
             className={`nav-tab ${activeTab === 'league' ? 'active' : ''}`}
             onClick={() => setActiveTab('league')}
           >
-            League
+            🏆 League
+          </button>
+          <button
+            className={`nav-tab ${activeTab === 'scores' ? 'active' : ''}`}
+            onClick={() => setActiveTab('scores')}
+          >
+            📊 Live Scores
+          </button>
+          <button
+            className={`nav-tab ${activeTab === 'analytics' ? 'active' : ''}`}
+            onClick={() => setActiveTab('analytics')}
+          >
+            📈 Analytics
+          </button>
+          <button
+            className={`nav-tab ${activeTab === 'trades' ? 'active' : ''}`}
+            onClick={() => setActiveTab('trades')}
+          >
+            🔄 Trades
+          </button>
+          <button
+            className={`nav-tab ${activeTab === 'create-league' ? 'active' : ''}`}
+            onClick={() => setActiveTab('create-league')}
+          >
+            ➕ Create League
           </button>
         </nav>
 
@@ -99,23 +132,9 @@ const AppContent: React.FC = () => {
       </main>
     </div>
   )
-  } catch (error) {
-    console.error('AppContent: Error rendering:', error)
-    return (
-      <div className="error-container">
-        <h2>Something went wrong</h2>
-        <p>Please refresh the page and try again.</p>
-        <button onClick={() => window.location.reload()} className="retry-btn">
-          Retry
-        </button>
-      </div>
-    )
-  }
 }
 
 function App() {
-  console.log('App: Rendering main App component')
-
   return (
     <AuthProvider>
       <AppContent />
