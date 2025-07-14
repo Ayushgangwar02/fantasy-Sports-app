@@ -50,7 +50,11 @@ const limiter = rateLimit({
 // Middleware
 app.use(helmet()); // Security headers
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: [
+    process.env.FRONTEND_URL || 'http://localhost:5173',
+    'http://localhost:5174', // Allow both Vite dev server ports
+    'http://localhost:3000'  // Allow other common dev ports
+  ],
   credentials: true
 }));
 app.use(morgan('combined')); // Logging
