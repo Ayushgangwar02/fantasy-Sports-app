@@ -15,6 +15,12 @@ const Auth: React.FC = () => {
 
   const { login, register } = useAuth();
 
+  // Test function to check if JavaScript is working
+  const testFunction = () => {
+    console.log('Test function called!');
+    alert('JavaScript is working!');
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -59,6 +65,26 @@ const Auth: React.FC = () => {
     });
   };
 
+  const handleDemoLogin = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('Demo login button clicked!');
+    alert('Demo button clicked!'); // Visual confirmation
+    setError('');
+    setIsLoading(true);
+
+    try {
+      console.log('Attempting demo login...');
+      await login('admin@fantasy.com', 'password123');
+      console.log('Demo login successful!');
+    } catch (err: any) {
+      console.error('Demo login error:', err);
+      setError(err.message || 'Demo login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -67,14 +93,7 @@ const Auth: React.FC = () => {
             {isLogin ? 'Sign in to your account' : 'Create your account'}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            {isLogin ? "Don't have an account? " : 'Already have an account? '}
-            <button
-              type="button"
-              onClick={toggleMode}
-              className="font-medium text-indigo-600 hover:text-indigo-500"
-            >
-              {isLogin ? 'Sign up' : 'Sign in'}
-            </button>
+            Welcome to Fantasy Sports Pro
           </p>
         </div>
         
@@ -174,7 +193,43 @@ const Auth: React.FC = () => {
               )}
             </button>
           </div>
+
+          {isLogin && (
+            <div className="mt-4">
+              <button
+                type="button"
+                onClick={handleDemoLogin}
+                disabled={isLoading}
+                className="group relative w-full flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                style={{ zIndex: 10 }}
+              >
+                🚀 Try Demo Account
+              </button>
+              <p className="mt-2 text-center text-xs text-gray-500">
+                Use demo credentials: admin@fantasy.com / password123
+              </p>
+              <button
+                type="button"
+                onClick={testFunction}
+                className="mt-2 w-full py-1 px-2 bg-red-500 text-white text-xs rounded hover:bg-red-600"
+              >
+                Test Button (Click Me)
+              </button>
+            </div>
+          )}
         </form>
+
+        <div className="mt-6">
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={toggleMode}
+              className="font-medium text-indigo-600 hover:text-indigo-500"
+            >
+              {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
