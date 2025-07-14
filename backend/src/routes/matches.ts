@@ -1,6 +1,6 @@
 import express from 'express';
 import Match from '../models/Match';
-import { auth } from '../middleware/auth';
+import { authenticateToken } from '../middleware/auth';
 
 const router = express.Router();
 
@@ -132,7 +132,7 @@ router.get('/:matchId/stats', async (req, res) => {
 });
 
 // Update match (admin only)
-router.put('/:matchId', auth, async (req, res) => {
+router.put('/:matchId', authenticateToken, async (req, res) => {
   try {
     // In a real app, you'd check if user is admin
     const match = await Match.findByIdAndUpdate(

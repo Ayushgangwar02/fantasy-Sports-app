@@ -2,12 +2,12 @@ import express from 'express';
 import Trade from '../models/Trade';
 import Team from '../models/Team';
 import Player from '../models/Player';
-import { auth } from '../middleware/auth';
+import { authenticateToken } from '../middleware/auth';
 
 const router = express.Router();
 
 // Get all trades for a league
-router.get('/league/:leagueId', auth, async (req, res) => {
+router.get('/league/:leagueId', authenticateToken, async (req, res) => {
   try {
     const { leagueId } = req.params;
     const { status, page = 1, limit = 20 } = req.query;
@@ -44,7 +44,7 @@ router.get('/league/:leagueId', auth, async (req, res) => {
 });
 
 // Get trades for a specific team
-router.get('/team/:teamId', auth, async (req, res) => {
+router.get('/team/:teamId', authenticateToken, async (req, res) => {
   try {
     const { teamId } = req.params;
     
@@ -72,7 +72,7 @@ router.get('/team/:teamId', auth, async (req, res) => {
 });
 
 // Propose a new trade
-router.post('/', auth, async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
   try {
     const {
       leagueId,
@@ -170,7 +170,7 @@ router.post('/', auth, async (req, res) => {
 });
 
 // Respond to a trade (accept/reject)
-router.put('/:tradeId/respond', auth, async (req, res) => {
+router.put('/:tradeId/respond', authenticateToken, async (req, res) => {
   try {
     const { tradeId } = req.params;
     const { action, rejectionReason } = req.body; // 'accept' or 'reject'
@@ -233,7 +233,7 @@ router.put('/:tradeId/respond', auth, async (req, res) => {
 });
 
 // Cancel a trade
-router.put('/:tradeId/cancel', auth, async (req, res) => {
+router.put('/:tradeId/cancel', authenticateToken, async (req, res) => {
   try {
     const { tradeId } = req.params;
     

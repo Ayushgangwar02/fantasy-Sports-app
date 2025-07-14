@@ -4,12 +4,12 @@ import Player from '../models/Player';
 import League from '../models/League';
 import Match from '../models/Match';
 import Trade from '../models/Trade';
-import { auth } from '../middleware/auth';
+import { authenticateToken } from '../middleware/auth';
 
 const router = express.Router();
 
 // Get league analytics
-router.get('/league/:leagueId', auth, async (req, res) => {
+router.get('/league/:leagueId', authenticateToken, async (req, res) => {
   try {
     const { leagueId } = req.params;
     
@@ -89,7 +89,7 @@ router.get('/league/:leagueId', auth, async (req, res) => {
 });
 
 // Get team analytics
-router.get('/team/:teamId', auth, async (req, res) => {
+router.get('/team/:teamId', authenticateToken, async (req, res) => {
   try {
     const { teamId } = req.params;
     
@@ -248,7 +248,7 @@ router.get('/player/:playerId', async (req, res) => {
 });
 
 // Get league trends and insights
-router.get('/trends/:leagueId', auth, async (req, res) => {
+router.get('/trends/:leagueId', authenticateToken, async (req, res) => {
   try {
     const { leagueId } = req.params;
     
